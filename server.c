@@ -13,11 +13,11 @@
 #define PORT 7777
 
 int main(int argc, char *argv[]) {
-    int listener = 0;
+    int listener = 0, pid = getpid();
     struct sockaddr_in addr;
 
     if ((listener = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        fprintf(stderr, "error creating listener\n");
+        fprintf(stderr, "server(%d): error creating listener\n", pid);
         exit(EXIT_FAILURE);
     }
 
@@ -29,17 +29,17 @@ int main(int argc, char *argv[]) {
     int so_reuseaddr = 1;
 
     if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &so_reuseaddr, sizeof(so_reuseaddr)) < 0) {
-        fprintf(stderr, "error calling setsockopt()\n");
+        fprintf(stderr, "server(%d): error calling setsockopt()\n", pid);
         exit(EXIT_FAILURE);
     }
 
     if (bind(listener, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-        fprintf(stderr, "error calling bind()\n");
+        fprintf(stderr, "server(%d): error calling bind()\n", pid);
         exit(EXIT_FAILURE);
     }
 
     if (listen(listener, 10) < 0) {
-        fprintf(stderr, "error calling listen()\n");
+        fprintf(stderr, "server(%d): error calling listen()\n", pid);
         exit(EXIT_FAILURE);
     }
 
@@ -49,18 +49,16 @@ int main(int argc, char *argv[]) {
         struct sockaddr_in client_addr;
         socklen_t addr_len = sizeof(client_addr);
         if ((client = accept(listener, (struct sockaddr*)&client_addr, &addr_len)) < 0) {
-            fprintf(stderr, "error calling accept()\n");
+            fprintf(stderr, "server(%d): error calling accept()\n", pid);
             exit(EXIT_FAILURE);
         }
-        fprintf(stdout, "client connected: %d\n", client);
-
+        fprintf(stdout, "server(%d): client(%s) connected\n", pid, inet_ntoa(client_addr.sin_addr));
         int pipe = connect_pipe(WORKER_SOCK);
         if (pipe < 0) {
-            fprintf(stderr, "error connecting pipe: %s", strerror(errno));
+            fprintf(stderr, "server(%d): error connecting pipe", pid);
             exit(EXIT_FAILURE);
         }
-
-        fprintf(stdout, "sending client(%d) to backend(%d)\n", client, pipe);
+        fprintf(stdout, "server(%d): sending socket to backend\n", pid);
         send_fd(pipe, client);
         close(client);
     }
