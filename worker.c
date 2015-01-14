@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
         int conn_fd = accept(pipe, (struct sockaddr *)&addr, &addr_len);
         int sock_fd = recv_fd(conn_fd);
         if (sock_fd < 0) {
-            fprintf(stderr, "worker(%d): error reading socket descriptior\n", pid);
+            fprintf(stderr, "worker(%d): error reading socket descriptor\n", pid);
             continue;
         }
         int pid = fork();
